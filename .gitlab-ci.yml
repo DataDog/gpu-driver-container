@@ -1,0 +1,7 @@
+include: https://gitlab-templates.ddbuild.io/compute-delivery/v2/compute-delivery.yml
+
+build-docker-image:
+  variables:
+    IMAGE_NAME: nvidia/gpu-driver-container
+    IMAGE_TAG: ${CI_COMMIT_TAG}-ubuntu22.04
+  extends: .build-docker-image
