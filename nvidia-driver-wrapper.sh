@@ -2,7 +2,7 @@
 
 set -exo pipefail
 
-export DRIVER_VERSION=$(awk '/^DRIVER_VERSIONS/ {print $NF}' /versions.mk)
-export DRIVER_BRANCH=$(echo "$DRIVER_VERSION" | cut -d. -f1)
+source /versions.env
+export DRIVER_VERSION DRIVER_BRANCH
 
 /opt/nvidia-driver/bin/nvidia-driver $@
