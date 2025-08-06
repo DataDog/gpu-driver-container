@@ -28,21 +28,33 @@ RUN DRIVER_VERSION="${VERSION%%-*}" \
     echo "DRIVER_BRANCH=$DRIVER_BRANCH" >> /versions.env && \
     echo "KERNEL_VERSION=$KERNEL_VERSION" >> /versions.env
 
-# update pkg cache and install pkgs for userspace driver libs
 RUN . /versions.env && \
-    apt-get install -y --download-only --no-install-recommends nvidia-driver-${DRIVER_BRANCH}-server \
+    apt-get install -y --download-only --no-install-recommends \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
-    libnvidia-nscq-${DRIVER_BRANCH}=${DRIVER_VERSION}-1
+    libnvidia-nscq-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
+    nvidia-driver-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
+    linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION} \
+    # all other packages are nvidia-driver dependencies
+    libnvidia-gl-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    nvidia-dkms-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    nvidia-kernel-common-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    nvidia-kernel-source-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    libnvidia-compute-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    libnvidia-extra-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    nvidia-compute-utils-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    libnvidia-decode-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    libnvidia-encode-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    nvidia-utils-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    xserver-xorg-video-nvidia-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    libnvidia-cfg1-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    libnvidia-fbc1-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1
 
-# update pkg cache and download pkgs for driver module installation during runtime.
-# this is done to avoid shipping .ko files.
 # avoid cleaning the cache after this to retain these packages during runtime.
 RUN . /versions.env && \
-    apt-get install --download-only --no-install-recommends -y linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
-    linux-signatures-nvidia-${KERNEL_VERSION} \
-    linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
-    # add support for nvidia open source driver packages during runtime
-    linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}
+    apt-get install --download-only --no-install-recommends -y \
+    linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
+    linux-signatures-nvidia-${KERNEL_VERSION}
 
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
