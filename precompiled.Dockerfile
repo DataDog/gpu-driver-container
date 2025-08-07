@@ -15,46 +15,50 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl
 RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
     chmod +x /usr/local/bin/donkey
 
-# Expected value is <major>.<minor>.<patch>-<kernel version>-<distro>
-# Example: 570.133.20-6.8.0-1032-aws-ubuntu22.04
+# Expected value is <major>-<kernel version>-<distro>
+# Example: 570-6.8.0-1032-aws-ubuntu22.04
 ARG VERSION
 ENV VERSION=${VERSION}
 
-RUN DRIVER_VERSION="${VERSION%%-*}" \
-    DRIVER_BRANCH="${DRIVER_VERSION%%.*}" \
+RUN DRIVER_BRANCH="${VERSION%%-*}" \
     KERNEL_DISTRO_VERSION="${VERSION#*-}" \
     KERNEL_VERSION="${KERNEL_DISTRO_VERSION%-*}" && \
-    echo "DRIVER_VERSION=$DRIVER_VERSION" > /versions.env && \
-    echo "DRIVER_BRANCH=$DRIVER_BRANCH" >> /versions.env && \
+    echo "DRIVER_BRANCH=$DRIVER_BRANCH" > /versions.env && \
     echo "KERNEL_VERSION=$KERNEL_VERSION" >> /versions.env
+
+COPY find-driver-version.sh /usr/local/bin/find-driver-version
+
+RUN . /versions.env && \
+    export DRIVER_BRANCH KERNEL_VERSION && \
+    FULL_DRIVER_VERSION=$(find-driver-version) \
+    DRIVER_VERSION="${FULL_DRIVER_VERSION%%-*}" && \
+    [ -n "$FULL_DRIVER_VERSION" ] && \
+    echo "FULL_DRIVER_VERSION=$FULL_DRIVER_VERSION" >> /versions.env && \
+    echo "DRIVER_VERSION=$DRIVER_VERSION" >> /versions.env
 
 RUN . /versions.env && \
     apt-get install -y --download-only --no-install-recommends \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
     libnvidia-nscq-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
-    nvidia-driver-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
+    nvidia-driver-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION} \
-    # all other packages are nvidia-driver dependencies
-    libnvidia-gl-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    nvidia-dkms-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    nvidia-kernel-common-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    nvidia-kernel-source-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    libnvidia-compute-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    libnvidia-extra-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    nvidia-compute-utils-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    libnvidia-decode-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    libnvidia-encode-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    nvidia-utils-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    xserver-xorg-video-nvidia-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    libnvidia-cfg1-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1 \
-    libnvidia-fbc1-${DRIVER_BRANCH}-server=${DRIVER_VERSION}-0ubuntu0.22.04.1
-
-# avoid cleaning the cache after this to retain these packages during runtime.
-RUN . /versions.env && \
-    apt-get install --download-only --no-install-recommends -y \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
-    linux-signatures-nvidia-${KERNEL_VERSION}
+    linux-signatures-nvidia-${KERNEL_VERSION} \
+    # all other packages are nvidia-driver dependencies
+    libnvidia-gl-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    nvidia-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    nvidia-kernel-common-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    nvidia-kernel-source-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-compute-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-extra-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    nvidia-compute-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-decode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-encode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    xserver-xorg-video-nvidia-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-cfg1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-fbc1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}
 
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
