@@ -11,9 +11,11 @@ import (
 )
 
 var (
-	driverBranch  = flag.String("driver-branch", "", "target branch of the nvidia driver (example: `570`)")
-	kernelVersion = flag.String("kernel-version", "", "version of the kernel (example `6.8.0-1032-aws`, if not specified all available versions are considered)")
-	help          = flag.Bool("help", false, "display this help message")
+	driverBranch        = flag.String("driver-branch", "", "target branch of the nvidia driver (example: `570`)")
+	kernelVersion       = flag.String("kernel-version", "", "version of the kernel (example `6.8.0-1032-aws`, if not specified all available versions are considered)")
+	kernelSemver        = flag.String("kernel-semver", "", "semver for the kernel version (example `6.8.0`, only applied if the kernel version is not set, if not specified all available semver are considered)")
+	kernelCloudProvider = flag.String("kernel-cloud-provider", "aws,gcp,azure", "comma-separated list of cloud providers for the kernel version (example `aws,gcp`, only applied if the kernel version is not set)")
+	help                = flag.Bool("help", false, "display this help message")
 )
 
 func printUsage() {
@@ -25,6 +27,8 @@ func printUsage() {
 func main() {
 	getopt.Alias("d", "driver-branch")
 	getopt.Alias("k", "kernel-version")
+	getopt.Alias("s", "kernel-semver")
+	getopt.Alias("c", "kernel-cloud-provider")
 	getopt.Alias("h", "help")
 
 	getopt.CommandLine.Usage = func() {}
@@ -69,7 +73,15 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		linuxModuleNvidiaPackageRegex := regexp.MustCompile(fmt.Sprintf("linux-modules-nvidia-%s-server-open-(\\d\\.\\d\\.\\d-(?:\\d)+-(?:(?:aws)|(?:gcp)|(?:azure)))", *driverBranch))
+		// Get kernel regex
+		kernelRegexSemver := `\d+\.\d+\.\d+`
+		if *kernelSemver != "" {
+			kernelRegexSemver = regexp.QuoteMeta(*kernelSemver)
+		}
+		kernelRegexCloudProvider := strings.Join(strings.Split(*kernelCloudProvider, ","), ")|(?:")
+		kernelRegex := fmt.Sprintf("%s-(?:\\d)+-(?:(?:%s))", kernelRegexSemver, kernelRegexCloudProvider)
+
+		linuxModuleNvidiaPackageRegex := regexp.MustCompile(fmt.Sprintf("linux-modules-nvidia-%s-server-open-(%s)", *driverBranch, kernelRegex))
 		kernelVersions = multiRepository.GetMatchesOnPackages(linuxModuleNvidiaPackageRegex)
 		fmt.Fprintf(os.Stderr, "[info] found following available kernel versions: %v\n", kernelVersions)
 	}
