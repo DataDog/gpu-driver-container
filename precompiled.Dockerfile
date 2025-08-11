@@ -1,3 +1,17 @@
+ARG BUILDER_IMAGE
+
+FROM ${BUILDER_IMAGE} AS builder
+
+WORKDIR /work
+
+COPY find-driver-version/ .
+
+ENV GOTOOLCHAIN=auto
+ENV CGO_ENABLED=0
+
+RUN go mod download
+RUN go build .
+
 FROM registry.ddbuild.io/images/nvidia-cuda-base:12.9.0
 
 USER root
@@ -26,13 +40,11 @@ RUN DRIVER_BRANCH="${VERSION%%-*}" \
     echo "DRIVER_BRANCH=$DRIVER_BRANCH" > /versions.env && \
     echo "KERNEL_VERSION=$KERNEL_VERSION" >> /versions.env
 
-COPY find-driver-version.sh /usr/local/bin/find-driver-version
+COPY --from=builder /work/find-driver-version /usr/local/bin/find-driver-version
 
 RUN . /versions.env && \
-    export DRIVER_BRANCH KERNEL_VERSION && \
-    FULL_DRIVER_VERSION=$(find-driver-version) \
+    FULL_DRIVER_VERSION=$(find-driver-version -d $DRIVER_BRANCH -k $KERNEL_VERSION | cut -d'>' -f2 | xargs) \
     DRIVER_VERSION="${FULL_DRIVER_VERSION%%-*}" && \
-    [ -n "$FULL_DRIVER_VERSION" ] && \
     echo "FULL_DRIVER_VERSION=$FULL_DRIVER_VERSION" >> /versions.env && \
     echo "DRIVER_VERSION=$DRIVER_VERSION" >> /versions.env
 
