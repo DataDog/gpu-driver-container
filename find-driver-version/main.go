@@ -86,6 +86,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "[info] found following available kernel versions: %v\n", kernelVersions)
 	}
 
+	// Exclude kernels that are in the exclusion list
+	availableKernelVersions, excludedKernels := SeparateExcludedKernels(*driverBranch, kernelVersions)
+	if len(excludedKernels) != 0 {
+		fmt.Fprintf(os.Stderr, "[warn] following kernel versions were excluded as they are in the exclusion list: %v\n", excludedKernels)
+	}
+
 	// Get the list of available driver versions
 	nvidiaDriverMultiPackage := multiRepository.GetMultiPackage(fmt.Sprintf("nvidia-driver-%s-server-open", *driverBranch))
 	availableNvidiaDriverVersions := nvidiaDriverMultiPackage.GetVersions()
@@ -97,7 +103,7 @@ func main() {
 
 	// Find the appropriate driver for all kernel versions
 	appropriateDriverForKernel := map[string]string{}
-	for _, version := range kernelVersions {
+	for _, version := range availableKernelVersions {
 		linuxModuleNvidiaPackageName := fmt.Sprintf("linux-modules-nvidia-%s-server-open-%s", *driverBranch, version)
 		linuxModuleNvidiaMultiPackage := multiRepository.GetMultiPackage(linuxModuleNvidiaPackageName)
 		nvidiaDriverDependencies := linuxModuleNvidiaMultiPackage.GetNvidiaDriverDependencies()
