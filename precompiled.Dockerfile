@@ -44,19 +44,21 @@ COPY --from=builder /work/find-driver-version /usr/local/bin/find-driver-version
 
 RUN . /versions.env && \
     FULL_DRIVER_VERSION=$(find-driver-version -d $DRIVER_BRANCH -k $KERNEL_VERSION | cut -d'>' -f2 | xargs) \
-    DRIVER_VERSION="${FULL_DRIVER_VERSION%%-*}" && \
+    DRIVER_VERSION="${FULL_DRIVER_VERSION%%-*}" \
+    MODULES_VERSION=$(apt-cache madison "linux-modules-nvidia-$DRIVER_BRANCH-server-open-$KERNEL_VERSION" | awk 'NR==1 {print $3}') && \
     echo "FULL_DRIVER_VERSION=$FULL_DRIVER_VERSION" >> /versions.env && \
-    echo "DRIVER_VERSION=$DRIVER_VERSION" >> /versions.env
+    echo "DRIVER_VERSION=$DRIVER_VERSION" >> /versions.env && \
+    echo "MODULES_VERSION=$MODULES_VERSION" >> /versions.env
 
 RUN . /versions.env && \
     apt-get install -y --download-only --no-install-recommends \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
     libnvidia-nscq-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
     nvidia-driver-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
-    linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
-    linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION} \
-    linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
-    linux-signatures-nvidia-${KERNEL_VERSION} \
+    linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
+    linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
+    linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
+    linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
     # all other packages are nvidia-driver dependencies
     libnvidia-gl-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
