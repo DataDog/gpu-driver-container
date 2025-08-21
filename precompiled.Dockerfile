@@ -24,7 +24,16 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 RUN apt-key del 7fa2af80 && \
     apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub"
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
+    build-essential \
+    ca-certificates \
+    curl \
+    kmod \
+    file \
+    libelf-dev \
+    libglvnd-dev \
+    pkg-config
 
 RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
     chmod +x /usr/local/bin/donkey
