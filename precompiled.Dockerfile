@@ -61,13 +61,14 @@ RUN . /versions.env && \
 
 RUN . /versions.env && \
     apt-get install -y --download-only --no-install-recommends \
-    nvidia-fabricmanager-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
-    libnvidia-nscq-${DRIVER_BRANCH}=${DRIVER_VERSION}-1 \
     nvidia-driver-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
+    # fabric-manager packages
+    nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
+    libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     # all other packages are nvidia-driver dependencies
     libnvidia-gl-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \

@@ -3,6 +3,6 @@
 set -exo pipefail
 
 source /versions.env
-export DRIVER_VERSION DRIVER_BRANCH
+export MODULES_VERSION DRIVER_BRANCH FULL_DRIVER_VERSION
 
 /opt/nvidia-driver/bin/nvidia-driver $@
