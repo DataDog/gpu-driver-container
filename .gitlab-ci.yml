@@ -17,8 +17,9 @@ sync-gpu-driver-tags:
   tags: ["arch:amd64"]
   image: registry.ddbuild.io/ci/compute-delivery@sha256:cf146746871f06c47a9861371fa2b7c4f58cf346dc83db740b61cc6cdaa0230b
   parallel:
+    # See supported driver branches here: https://endoflife.date/nvidia
     matrix:
-      - DRIVER_BRANCH: 550
+      - DRIVER_BRANCH: 535
       - DRIVER_BRANCH: 570
   variables:
     KERNEL_MAJOR: 6.8.0
