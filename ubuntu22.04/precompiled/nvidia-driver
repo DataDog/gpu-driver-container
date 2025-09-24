@@ -4,7 +4,6 @@
 set -eu
 
 KERNEL_VERSION=$(uname -r)
-OPEN_KERNEL_MODULES_ENABLED="${OPEN_KERNEL_MODULES_ENABLED:-false}"
 RUN_DIR=/run/nvidia
 PID_FILE=${RUN_DIR}/${0##*/}.pid
 DRIVER_BRANCH=${DRIVER_BRANCH:?"Missing driver branch"}
@@ -16,6 +15,7 @@ NVIDIA_MODULE_PARAMS=()
 NVIDIA_UVM_MODULE_PARAMS=()
 NVIDIA_MODESET_MODULE_PARAMS=()
 NVIDIA_PEERMEM_MODULE_PARAMS=()
+KERNEL_MODULE_TYPE=${KERNEL_MODULE_TYPE:-auto}
 
 _update_package_cache() {
     if [ "${PACKAGE_TAG:-}" != "builtin" ]; then
@@ -145,7 +145,7 @@ _load_driver() {
 
     if _assert_nvswitch_system; then
         echo "Installing NVIDIA fabric manager and libnvidia NSCQ packages..."
-        apt-get install -y --no-install-recommends \
+        apt-get install -y --no-install-recommends --no-download \
             nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
             libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
 
@@ -165,8 +165,8 @@ _unload_driver() {
     local nvidia_modeset_refs=0
     local nvidia_peermem_refs=0
 
-    echo "Stopping NVIDIA persistence daemon..."
     if [ -f /var/run/nvidia-persistenced/nvidia-persistenced.pid ]; then
+        echo "Stopping NVIDIA persistence daemon..."
         local pid=$(< /var/run/nvidia-persistenced/nvidia-persistenced.pid)
 
         kill -SIGTERM "${pid}"
@@ -233,27 +233,56 @@ _unload_driver() {
     return 0
 }
 
+_resolve_kernel_type_from_driver_branch() {
+  [[ "${DRIVER_BRANCH}" -lt 560 ]] && KERNEL_TYPE=kernel || KERNEL_TYPE=kernel-open
+}
+
+# _resolve_kernel_type determines which kernel module type, open or proprietary, to install.
+# This function assumes that the nvidia-installer binary is in the PATH, so this function
+# should only be invoked after the userspace driver components have been installed.
+#
+# KERNEL_MODULE_TYPE is the frontend interface that users can use to configure which module
+# to install. Valid values for KERNEL_MODULE_TYPE are 'auto' (default), 'open', and 'proprietary'.
+# When 'auto' is configured, we use the nvidia-installer to recommend the module type to install.
+_resolve_kernel_type() {
+  if [ "${KERNEL_MODULE_TYPE}" == "proprietary" ]; then
+    KERNEL_TYPE=kernel
+  elif [ "${KERNEL_MODULE_TYPE}" == "open" ]; then
+    KERNEL_TYPE=kernel-open
+  elif [ "${KERNEL_MODULE_TYPE}" == "auto" ]; then
+    kernel_module_type=$(nvidia-installer --print-recommended-kernel-module-type 2> /dev/null)
+    if [ $? -ne 0 ]; then
+      echo "failed to retrieve the recommended kernel module type from nvidia-installer, falling back to using the driver branch"
+      _resolve_kernel_type_from_driver_branch
+      return 0
+    fi
+    [[ "${kernel_module_type}" == "open" ]] && KERNEL_TYPE=kernel-open || KERNEL_TYPE=kernel
+  else
+    echo "invalid value for the KERNEL_MODULE_TYPE variable: ${KERNEL_MODULE_TYPE}"
+    return 1
+  fi
+}
+
 # Link and install the kernel modules from a precompiled packages
 _install_driver() {
-    # Install necessary userspace, fabric manager and libnvidia-nscq packages
-    apt-get install -y --no-install-recommends nvidia-driver-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}
-
-    # Uninstall unnecessary packages installed as a part of the nvidia-driver-${DRIVER_BRANCH}-server package
-    apt-get purge -y \
-        libnvidia-egl-wayland1 \
-        nvidia-dkms-${DRIVER_BRANCH}-server \
-        nvidia-kernel-source-${DRIVER_BRANCH}-server \
-        xserver-xorg-video-nvidia-${DRIVER_BRANCH}-server
+    # Install necessary driver userspace packages
+    apt-get install -y --no-install-recommends --no-download \
+        nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+        nvidia-headless-no-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+        libnvidia-decode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+        libnvidia-extra-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+        libnvidia-encode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+        libnvidia-fbc1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}
 
     # Now install the precompiled kernel module packages signed by Canonical
-    if [ "$OPEN_KERNEL_MODULES_ENABLED" = true ]; then
+    if [ "$KERNEL_TYPE" = "kernel-open" ]; then
         echo "Installing Open NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends -y \
+        apt-get install --no-install-recommends --no-download -y \
             linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION}
     else
         echo "Installing Closed NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends -y \
+        apt-get install --no-install-recommends --no-download -y \
             linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION}
@@ -278,6 +307,9 @@ _unmount_rootfs() {
 }
 
 init() {
+    # Determine the kernel module type
+    _resolve_kernel_type || exit 1
+
     echo -e "\n========== NVIDIA Software Installer ==========\n"
     echo -e "Starting installation of NVIDIA driver branch ${DRIVER_BRANCH} for Linux kernel version ${KERNEL_VERSION}\n"
 
