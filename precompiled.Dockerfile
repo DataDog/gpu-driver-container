@@ -25,6 +25,7 @@ RUN apt-key del 7fa2af80 && \
     apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-rdepends \
     apt-utils \
     build-essential \
     ca-certificates \
@@ -34,6 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libelf-dev \
     libglvnd-dev \
     pkg-config
+
+# Prevent apt from cleaning its cache after each invocation
+RUN sed -i 's/^\(.*DPkg::Post-Invoke.*\)$/\/\/ \1/' /etc/apt/apt.conf.d/*
 
 RUN curl -fsSL -o /usr/local/bin/donkey https://github.com/3XX0/donkey/releases/download/v1.1.0/donkey && \
     chmod +x /usr/local/bin/donkey
@@ -60,28 +64,26 @@ RUN . /versions.env && apt-get update && \
     echo "MODULES_VERSION=$MODULES_VERSION" >> /versions.env
 
 RUN . /versions.env && \
-    apt-get install -y --download-only --no-install-recommends \
-    # driver packages
-    nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-headless-no-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-decode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-extra-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-encode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-fbc1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
-    # module packages
     linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
-    # fabric-manager packages
     nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
-    # nvidia-driver dependencies
     nvidia-kernel-common-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-kernel-source-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-compute-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-compute-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
-    libnvidia-cfg1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}
+    libnvidia-cfg1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}" && \
+    BASE_PACKAGES_NAMES=$(echo "$BASE_PACKAGES" | sed -E 's/=([^ ]+)//g') && \
+    DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-") && \
+    apt-get install -y --download-only --no-install-recommends --reinstall $BASE_PACKAGES $DEP_PACKAGES
 
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver

@@ -145,7 +145,7 @@ _load_driver() {
 
     if _assert_nvswitch_system; then
         echo "Installing NVIDIA fabric manager and libnvidia NSCQ packages..."
-        apt-get install -y --no-install-recommends \
+        apt-get install -y --no-install-recommends --no-download \
             nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
             libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
 
@@ -266,7 +266,7 @@ _resolve_kernel_type() {
 # Link and install the kernel modules from a precompiled packages
 _install_driver() {
     # Install necessary driver userspace packages
-    apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends --no-download \
         nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
         nvidia-headless-no-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
         libnvidia-decode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
@@ -277,12 +277,12 @@ _install_driver() {
     # Now install the precompiled kernel module packages signed by Canonical
     if [ "$KERNEL_TYPE" = "kernel-open" ]; then
         echo "Installing Open NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends -y \
+        apt-get install --no-install-recommends --no-download -y \
             linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION}
     else
         echo "Installing Closed NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends -y \
+        apt-get install --no-install-recommends --no-download -y \
             linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION}
