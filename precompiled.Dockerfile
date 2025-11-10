@@ -14,6 +14,8 @@ RUN go build .
 
 FROM registry.ddbuild.io/images/nvidia-cuda-base:12.9.0
 
+ARG TARGETARCH
+
 USER root
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -74,6 +76,8 @@ RUN . /versions.env && \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
+    infiniband-diags \
+    nvlsm \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     nvidia-kernel-common-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
@@ -81,6 +85,8 @@ RUN . /versions.env && \
     libnvidia-compute-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-compute-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-cfg1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}" && \
+    BASE_AMD_PACKAGES="libnvsdm=${DRIVER_VERSION}-1" && \
+    [ "$TARGETARCH" = "amd64" ] && BASE_PACKAGES="$BASE_PACKAGES $BASE_AMD_PACKAGES" || true && \
     BASE_PACKAGES_NAMES=$(echo "$BASE_PACKAGES" | sed -E 's/=([^ ]+)//g') && \
     DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-") && \
     apt-get install -y --download-only --no-install-recommends --reinstall $BASE_PACKAGES $DEP_PACKAGES
