@@ -19,7 +19,6 @@ sync-gpu-driver-tags:
   parallel:
     # See supported driver branches here: https://endoflife.date/nvidia
     matrix:
-      - DRIVER_BRANCH: 570
       - DRIVER_BRANCH: 580
   variables:
     KERNEL_MAJOR: 6.8.0
