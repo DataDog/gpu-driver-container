@@ -81,7 +81,7 @@ func main() {
 		kernelRegexCloudProvider := strings.Join(strings.Split(*kernelCloudProvider, ","), ")|(?:")
 		kernelRegex := fmt.Sprintf("%s-(?:\\d)+-(?:(?:%s))", kernelRegexSemver, kernelRegexCloudProvider)
 
-		linuxModuleNvidiaPackageRegex := regexp.MustCompile(fmt.Sprintf("linux-modules-nvidia-%s-server-open-(%s)", *driverBranch, kernelRegex))
+		linuxModuleNvidiaPackageRegex := regexp.MustCompile(fmt.Sprintf("^linux-modules-nvidia-%s-server-open-(%s)$", *driverBranch, kernelRegex))
 		kernelVersions = multiRepository.GetMatchesOnPackages(linuxModuleNvidiaPackageRegex)
 		fmt.Fprintf(os.Stderr, "[info] found following available kernel versions: %v\n", kernelVersions)
 	}
