@@ -57,7 +57,7 @@ RUN DRIVER_BRANCH="${VERSION%%-*}" \
 
 COPY --from=builder /work/find-driver-version /usr/local/bin/find-driver-version
 
-RUN . /versions.env && apt-get update && \
+RUN . /versions.env && echo 1 && apt-get update && \
     FULL_DRIVER_VERSION=$(find-driver-version -d $DRIVER_BRANCH -k $KERNEL_VERSION | cut -d'>' -f2 | xargs) \
     DRIVER_VERSION="${FULL_DRIVER_VERSION%%-*}" \
     MODULES_VERSION=$(apt-cache madison "linux-modules-nvidia-$DRIVER_BRANCH-server-open-$KERNEL_VERSION" | awk 'NR==1 {print $3}') && \
