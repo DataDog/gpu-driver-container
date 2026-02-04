@@ -53,9 +53,12 @@ RUN DRIVER_BRANCH="${VERSION%%-*}" \
     KERNEL_DISTRO_VERSION="${VERSION#*-}" \
     KERNEL_VERSION="${KERNEL_DISTRO_VERSION%-*}" && \
     echo "DRIVER_BRANCH=$DRIVER_BRANCH" > /versions.env && \
+    echo "TARGETARCH=$TARGETARCH" >> /versions.env && \
     echo "KERNEL_VERSION=$KERNEL_VERSION" >> /versions.env
 
 COPY --from=builder /work/find-driver-version /usr/local/bin/find-driver-version
+
+RUN echo 'skip docker cache 1'
 
 RUN . /versions.env && apt-get update && \
     FULL_DRIVER_VERSION=$(find-driver-version -d $DRIVER_BRANCH -k $KERNEL_VERSION | cut -d'>' -f2 | xargs) \
@@ -80,6 +83,7 @@ RUN . /versions.env && \
     nvlsm \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
+    nvidia-imex-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     nvidia-kernel-common-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-kernel-source-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-compute-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
