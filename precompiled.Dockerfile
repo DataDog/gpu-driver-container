@@ -101,6 +101,9 @@ RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
 
+ADD download_azure_grid_driver.sh /tmp
+RUN /tmp/download_azure_grid_driver.sh
+
 WORKDIR  /drivers
 
 ENTRYPOINT ["nvidia-driver", "init"]
