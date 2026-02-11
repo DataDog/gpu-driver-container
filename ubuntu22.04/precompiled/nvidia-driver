@@ -81,7 +81,15 @@ _assert_nvlink5_system() (
     return 1
 )
 
+# This kernel module is not loaded by default
+_load_ib_umad() {
+    apt-get install -y --no-install-recommends --no-download linux-modules-extra-${KERNEL_VERSION}
+    echo "Manually loading ib_umad"
+    modprobe ib_umad
+}
+
 _ensure_nvlink5_prerequisites() (
+    _load_ib_umad
     until  lsmod | grep mlx5_core > /dev/null 2>&1 && lsmod | grep ib_umad > /dev/null 2>&1;
     do
         echo "waiting for the mlx5_core and ib_umad kernel modules to be loaded"

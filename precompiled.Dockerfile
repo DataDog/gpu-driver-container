@@ -58,7 +58,7 @@ RUN DRIVER_BRANCH="${VERSION%%-*}" \
 
 COPY --from=builder /work/find-driver-version /usr/local/bin/find-driver-version
 
-RUN echo 'skip docker cache 1'
+RUN echo 'skip docker cache 2'
 
 RUN . /versions.env && apt-get update && \
     FULL_DRIVER_VERSION=$(find-driver-version -d $DRIVER_BRANCH -k $KERNEL_VERSION | cut -d'>' -f2 | xargs) \
@@ -79,6 +79,7 @@ RUN . /versions.env && \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
+    linux-modules-extra-${KERNEL_VERSION} \
     infiniband-diags \
     nvlsm \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
