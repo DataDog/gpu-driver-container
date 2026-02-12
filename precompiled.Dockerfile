@@ -102,7 +102,9 @@ COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
 
 ADD download_azure_grid_driver.sh /tmp
-RUN /tmp/download_azure_grid_driver.sh
+# TODO: Azure support only several GRID driver versions. Temporary hardcode the version.
+# RUN . /versions.env && /tmp/download_azure_grid_driver.sh "$DRIVER_VERSION"
+RUN /tmp/download_azure_grid_driver.sh "535.161.08"
 
 WORKDIR  /drivers
 

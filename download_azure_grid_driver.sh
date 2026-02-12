@@ -5,6 +5,14 @@ set -eu
 # GRID_INSTALLER_DIR is provided by Dockerfile ENV
 GRID_INSTALLER_DIR=${GRID_INSTALLER_DIR:-/opt/nvidia-grid-install}
 
+# Available Azure GRID driver versions
+AVAILABLE_VERSIONS="550.144.06, 550.144.03, 535.161.08, 535.154.05, 535.54.03, 525.105.17, 525.85.05, 525.60.13"
+
+print_usage() {
+    echo "Usage: $0 <driver_version>"
+    echo "Available versions: $AVAILABLE_VERSIONS"
+}
+
 get_grid_azure_url() {
     local version="$1"
 
@@ -43,14 +51,22 @@ get_grid_azure_url() {
 }
 
 fetch_grid_azure_installer() {
+    local driver_version="$1"
+
+    if [ -z "$driver_version" ]; then
+        echo "ERROR: Driver version must be provided as an argument"
+        print_usage
+        exit 1
+    fi
+
     mkdir -p "$GRID_INSTALLER_DIR"
     cd "$GRID_INSTALLER_DIR"
 
-    local download_url=$(get_grid_azure_url "$DRIVER_VERSION")
+    local download_url=$(get_grid_azure_url "$driver_version")
 
     if [ -z "$download_url" ]; then
-        echo "ERROR: No Azure GRID driver URL found for version $DRIVER_VERSION"
-        echo "Available versions: 550.144.06, 550.144.03, 535.161.08, 535.154.05, 535.54.03, 525.105.17, 525.85.05, 525.60.13"
+        echo "ERROR: No Azure GRID driver URL found for version $driver_version"
+        print_usage
         exit 1
     fi
 
@@ -63,4 +79,4 @@ fetch_grid_azure_installer() {
     echo "GRID installer downloaded successfully to $GRID_INSTALLER_DIR/$filename"
 }
 
-fetch_grid_azure_installer
+fetch_grid_azure_installer "$@"
