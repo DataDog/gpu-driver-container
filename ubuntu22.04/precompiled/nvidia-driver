@@ -477,19 +477,19 @@ _install_grid_driver() {
 }
 
 _is_azure_grid_driver_required() {
-    # Get Instance type from the The Azure Instance Metadata Service (IMDS).
-    local instance_type=$(curl -s -H Metadata:true \
-            "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-02-01&format=text")
+    # Check for NVIDIA A10 GPU (vendor: 0x10de, device: 0x2236)
+    # NVIDIA A10 requires GRID driver on Azure
+    for dev in /sys/bus/pci/devices/*; do
+        if [ -f "$dev/vendor" ] && [ -f "$dev/device" ]; then
+            vendor=$(cat "$dev/vendor")
+            device=$(cat "$dev/device")
 
-    # List of Azure VM series that require GRID driver
-    # NV-series: Virtual Desktop Infrastructure (VDI) and remote visualization workloads
-    local grid_instance_patterns="^(Standard_NV|Standard_NVv3)"
-
-    # Check if instance type matches any of the GRID-required patterns using regex
-    if [[ "$instance_type" =~ $grid_instance_patterns ]]; then
-        echo "Detected Azure instance type: $instance_type, that requires GRID driver"
-        return 0  # GRID driver required
-    fi
+            if [ "$vendor" = "0x10de" ] && [ "$device" = "0x2236" ]; then
+                echo "Detected NVIDIA A10 GPU at $(basename $dev), GRID driver required"
+                return 0  # GRID driver required
+            fi
+        fi
+    done
 
     return 1  # GRID driver not required
 }
