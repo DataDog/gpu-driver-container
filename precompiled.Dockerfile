@@ -58,7 +58,7 @@ RUN DRIVER_BRANCH="${VERSION%%-*}" \
 
 COPY --from=builder /work/find-driver-version /usr/local/bin/find-driver-version
 
-RUN echo 'skip docker cache 2'
+RUN echo 'skip docker cache 3'
 
 RUN . /versions.env && apt-get update && \
     FULL_DRIVER_VERSION=$(find-driver-version -d $DRIVER_BRANCH -k $KERNEL_VERSION | cut -d'>' -f2 | xargs) \
@@ -101,8 +101,5 @@ COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
 
 WORKDIR  /drivers
-
-# Remove cuda repository to avoid GPG errors
-RUN rm -f /etc/apt/sources.list.d/cuda*
 
 ENTRYPOINT ["nvidia-driver", "init"]
