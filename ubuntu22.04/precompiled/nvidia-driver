@@ -81,15 +81,15 @@ _assert_nvlink5_system() (
     return 1
 )
 
-# This kernel module is not loaded by default
-_load_ib_umad() {
+# These kernel modules are not loaded by default
+_load_ib_modules() {
     apt-get install -y --no-install-recommends --no-download linux-modules-extra-${KERNEL_VERSION}
-    echo "Manually loading ib_umad"
+    echo "Manually loading ib_umad and mlx5_ib"
     modprobe ib_umad
+    modprobe mlx5_ib
 }
 
 _ensure_nvlink5_prerequisites() (
-    _load_ib_umad
     until  lsmod | grep mlx5_core > /dev/null 2>&1 && lsmod | grep ib_umad > /dev/null 2>&1;
     do
         echo "waiting for the mlx5_core and ib_umad kernel modules to be loaded"
@@ -226,6 +226,11 @@ _load_driver() {
 
     echo "Starting NVIDIA persistence daemon..."
     nvidia-persistenced --persistence-mode
+
+    # Load infiniband kernel modules on NVLink5+ systems
+    if lspci | grep -qiE 'mellanox|mlx5|connectx'; then
+        _load_ib_modules
+    fi
 
     if _assert_nvlink5_system; then
         _ensure_nvlink5_prerequisites || return 1

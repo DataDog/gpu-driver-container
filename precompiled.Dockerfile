@@ -36,7 +36,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     libelf-dev \
     libglvnd-dev \
-    pkg-config
+    pkg-config \
+    pciutils
 
 # Prevent apt from cleaning its cache after each invocation
 RUN sed -i 's/^\(.*DPkg::Post-Invoke.*\)$/\/\/ \1/' /etc/apt/apt.conf.d/*
