@@ -434,6 +434,12 @@ _install_grid_driver() {
 
     echo "Using GRID installer: $installer_file"
 
+    # Install kernel headers required for DKMS
+    echo "Installing kernel headers for ${KERNEL_VERSION}..."
+    apt-get install --no-install-recommends --no-download -y \
+        linux-headers-${KERNEL_VERSION} \
+        dkms
+
     # Create temporary directory for installer
     local tmpdir="$GRID_INSTALLER_DIR/nvidia-grid-tmp"
     mkdir -p "$tmpdir"

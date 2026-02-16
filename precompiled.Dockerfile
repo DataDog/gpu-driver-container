@@ -97,6 +97,19 @@ RUN . /versions.env && \
     DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-") && \
     apt-get install -y --download-only --no-install-recommends --reinstall $BASE_PACKAGES $DEP_PACKAGES
 
+# Remove cuda repository to avoid GPG errors
+# Remove cuda repository before downloading dkms to avoid version conflicts
+# CUDA repo has dkms 1:3.3.0 but Ubuntu has 2.8.7 - we need Ubuntu version for runtime
+RUN rm -f /etc/apt/sources.list.d/cuda* && apt-get update
+
+# Download kernel headers, dkms, and ALL their dependencies for GRID driver support
+# This ensures runtime installation with --no-download will succeed
+# Note: We must download gcc-12 explicitly as runtime may prefer it over installed gcc-11
+RUN . /versions.env && \
+    apt-get install -y --download-only --no-install-recommends \
+        linux-headers-${KERNEL_VERSION} \
+        dkms
+
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
