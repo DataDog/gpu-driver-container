@@ -434,10 +434,12 @@ _install_grid_driver() {
 
     echo "Using GRID installer: $installer_file"
 
-    # Install kernel headers required for DKMS
-    echo "Installing kernel headers for ${KERNEL_VERSION}..."
+    # Install kernel headers and modules required for DKMS
+    # linux-modules provides video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
+    echo "Installing kernel headers and modules for ${KERNEL_VERSION}..."
     apt-get install --no-install-recommends --no-download -y \
         linux-headers-${KERNEL_VERSION} \
+        linux-modules-${KERNEL_VERSION} \
         dkms
 
     # Create temporary directory for installer
@@ -446,8 +448,9 @@ _install_grid_driver() {
 
     # Install GRID driver using the .run installer
     # -s (--silent): non-interactive silent mode
-    # --dkms: use DKMS to build kernel modules
+    # --dkms: use DKMS to build and load kernel modules automatically
     # --tmpdir: specify temporary directory for installation
+    # Note: GRID drivers do not support --skip-module-load option
     bash -c "$installer_file -s --dkms --tmpdir $tmpdir"
 
     local exit_code=$?

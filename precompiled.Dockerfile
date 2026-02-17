@@ -102,12 +102,12 @@ RUN . /versions.env && \
 # CUDA repo has dkms 1:3.3.0 but Ubuntu has 2.8.7 - we need Ubuntu version for runtime
 RUN rm -f /etc/apt/sources.list.d/cuda* && apt-get update
 
-# Download kernel headers, dkms, and ALL their dependencies for GRID driver support
-# This ensures runtime installation with --no-download will succeed
-# Note: We must download gcc-12 explicitly as runtime may prefer it over installed gcc-11
+# Download kernel headers, dkms, linux-modules (for video.ko) for GRID driver support
+# linux-modules contains video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
 RUN . /versions.env && \
     apt-get install -y --download-only --no-install-recommends \
         linux-headers-${KERNEL_VERSION} \
+        linux-modules-${KERNEL_VERSION} \
         dkms
 
 RUN mkdir -p /opt/nvidia-driver/bin
@@ -117,7 +117,7 @@ COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
 ADD download_azure_grid_driver.sh /tmp
 # TODO: Azure support only several GRID driver versions. Temporary hardcode the version.
 # RUN . /versions.env && /tmp/download_azure_grid_driver.sh "$DRIVER_VERSION"
-RUN /tmp/download_azure_grid_driver.sh "535.161.08"
+RUN /tmp/download_azure_grid_driver.sh "550.144.06"
 
 WORKDIR  /drivers
 
