@@ -97,28 +97,26 @@ RUN . /versions.env && \
     DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-") && \
     apt-get install -y --download-only --no-install-recommends --reinstall $BASE_PACKAGES $DEP_PACKAGES
 
-# Remove cuda repository before downloading dkms to avoid version conflicts
-# CUDA repo has dkms 1:3.3.0 but Ubuntu has 2.8.7 - we need Ubuntu version for runtime
-# Note: We remove repo files but don't run apt-get update to preserve package cache
-# for runtime installation of precompiled driver packages
-RUN rm -f /etc/apt/sources.list.d/cuda*
-
-# Download kernel headers, dkms, linux-modules (for video.ko) for GRID driver support
+# Download GRID driver and its dependencie: kernel headers, dkms, linux-modules (for video.ko) — Azure only
+COPY download_azure_grid_driver.sh /tmp
 # linux-modules contains video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
+# Note: cuda repo is removed (not updated) to preserve package cache while avoiding dkms version conflicts
+# (CUDA repo has dkms 1:3.3.0 but Ubuntu has 2.8.7 — we need the Ubuntu version for runtime)
+# TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
 RUN . /versions.env && \
-    apt-get install -y --download-only --no-install-recommends \
-        linux-headers-${KERNEL_VERSION} \
-        linux-modules-${KERNEL_VERSION} \
-        dkms
+    if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
+        rm -f /etc/apt/sources.list.d/cuda* && \
+        apt-get install -y --download-only --no-install-recommends \
+            linux-headers-${KERNEL_VERSION} \
+            linux-modules-${KERNEL_VERSION} \
+            dkms && \
+        /tmp/download_azure_grid_driver.sh "550.144.06"; \
+    fi
 
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
+COPY ubuntu22.04/precompiled/grid-driver /opt/nvidia-driver/bin/grid-driver
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
-
-ADD download_azure_grid_driver.sh /tmp
-# TODO: Azure support only several GRID driver versions. Temporary hardcode the version.
-# RUN . /versions.env && /tmp/download_azure_grid_driver.sh "$DRIVER_VERSION"
-RUN /tmp/download_azure_grid_driver.sh "550.144.06"
 
 WORKDIR  /drivers
 
