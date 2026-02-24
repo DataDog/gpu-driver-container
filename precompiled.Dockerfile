@@ -97,8 +97,22 @@ RUN . /versions.env && \
     DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-") && \
     apt-get install -y --download-only --no-install-recommends --reinstall $BASE_PACKAGES $DEP_PACKAGES
 
+# Download GRID driver and its dependencie: kernel headers, dkms, linux-modules (for video.ko) — Azure only
+COPY download_azure_grid_driver.sh /tmp
+# linux-modules contains video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
+# TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
+RUN . /versions.env && \
+    if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
+        apt-get install -y --download-only --no-install-recommends \
+            linux-headers-${KERNEL_VERSION} \
+            linux-modules-${KERNEL_VERSION} \
+            dkms && \
+        /tmp/download_azure_grid_driver.sh "550.144.06"; \
+    fi
+
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
+COPY ubuntu22.04/precompiled/grid-driver /opt/nvidia-driver/bin/grid-driver
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
 
 WORKDIR  /drivers
