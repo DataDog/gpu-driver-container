@@ -107,7 +107,7 @@ RUN . /versions.env && \
             linux-headers-${KERNEL_VERSION} \
             linux-modules-${KERNEL_VERSION} \
             dkms && \
-        /tmp/download_azure_grid_driver.sh "550.144.06"; \
+        /tmp/download_azure_grid_driver.sh "570.195.03"; \
     fi
 
 RUN mkdir -p /opt/nvidia-driver/bin

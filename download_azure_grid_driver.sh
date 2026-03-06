@@ -18,6 +18,9 @@ get_grid_azure_url() {
 
     # Azure GRID driver version mapping
     case "$version" in
+        570.195.03*)
+            echo "https://download.microsoft.com/download/0541e1a5-dff2-4b8c-a79c-96a7664b1d49/NVIDIA-Linux-x86_64-570.195.03-grid-azure.run"
+            ;;
         550.144.06*)
             echo "https://download.microsoft.com/download/c5319e92-672e-4067-8d85-ab66a7a64db3/NVIDIA-Linux-x86_64-550.144.06-grid-azure.run"
             ;;
