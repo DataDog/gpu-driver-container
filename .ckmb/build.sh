@@ -91,6 +91,11 @@ BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
 if [ "$TARGETARCH" = "amd64" ]; then
     BASE_PACKAGES="$BASE_PACKAGES libnvsdm=${DRIVER_VERSION}-1"
 fi
+if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
+    # Download GRID driver and its dependencies: kernel headers, dkms, linux-modules (for video.ko) — Azure only
+    # linux-modules contains video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
+    BASE_PACKAGES="$BASE_PACKAGES linux-headers-${KERNEL_VERSION} linux-modules-${KERNEL_VERSION} dkms python3.10-minimal build-essential"
+fi
 BASE_PACKAGES_NAMES=$(echo "$BASE_PACKAGES" | sed -E 's/=([^ ]+)//g')
 DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-")
 mkdir -p /ckmb/apt-cache/pool/partial
@@ -102,6 +107,13 @@ dpkg-scanpackages pool /dev/null > Packages
 sed -i 's|^Filename: /ckmb/apt-cache/|Filename: |' Packages
 gzip -9c Packages > Packages.gz
 cd -
+
+# Download Azure GRID drivers
+cp ubuntu22.04/precompiled/grid-driver /ckmb/grid-driver
+if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
+    # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
+    ./download_azure_grid_driver.sh "535.161.08";
+fi
 
 
 ### Copy nvidia-driver executable ###

@@ -2,8 +2,7 @@
 
 set -eu
 
-# GRID_INSTALLER_DIR is provided by Dockerfile ENV
-GRID_INSTALLER_DIR=${GRID_INSTALLER_DIR:-/opt/nvidia-grid-install}
+GRID_INSTALLER_DIR=${GRID_INSTALLER_DIR:-/ckmb/nvidia-grid-install}
 
 # Available Azure GRID driver versions
 AVAILABLE_VERSIONS="550.144.06, 535.161.08, 525.105.17"

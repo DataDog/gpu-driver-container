@@ -1,3 +1,7 @@
+# This file is not longer in use
+# CKMB Dockerfile is now the official Dockerfile used to build the GPU driver image
+# See https://github.com/DataDog/compute-nodes-kernel-module-builder/blob/main/Dockerfile
+
 ARG BUILDER_IMAGE
 
 FROM ${BUILDER_IMAGE} AS builder
