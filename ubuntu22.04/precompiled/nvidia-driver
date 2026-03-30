@@ -229,6 +229,12 @@ _load_driver() {
     echo "Starting NVIDIA persistence daemon..."
     nvidia-persistenced --persistence-mode
 
+    if _is_grid_driver_required; then
+        # we need to start nvidia-gridd to get vGPU License for GRID driver
+        echo "Starting nvidia-gridd.."
+        LD_LIBRARY_PATH=/usr/lib/$(uname -m)-linux-gnu/nvidia/gridd nvidia-gridd
+    fi
+
     # Load infiniband kernel modules on NVLink5+ systems
     if lspci | grep -qiE 'mellanox|mlx5|connectx'; then
         _load_ib_modules
@@ -277,6 +283,21 @@ _unload_driver() {
     local nvidia_uvm_refs=0
     local nvidia_modeset_refs=0
     local nvidia_peermem_refs=0
+
+    if [ -f /var/run/nvidia-gridd/nvidia-gridd.pid ]; then
+        echo "Stopping NVIDIA grid daemon..."
+        local pid=$(< /var/run/nvidia-gridd/nvidia-gridd.pid)
+
+        kill -SIGTERM "${pid}"
+        for i in $(seq 1 10); do
+            kill -0 "${pid}" 2> /dev/null || break
+            sleep 0.1
+        done
+        if [ $i -eq 10 ]; then
+            echo "Could not stop NVIDIA Grid daemon" >&2
+            return 1
+        fi
+    fi
 
     if [ -f /var/run/nvidia-persistenced/nvidia-persistenced.pid ]; then
         echo "Stopping NVIDIA persistence daemon..."
