@@ -112,7 +112,7 @@ cd -
 cp ubuntu22.04/precompiled/grid-driver /ckmb/grid-driver
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
     # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
-    ./download_azure_grid_driver.sh "535.161.08";
+    ./download_azure_grid_driver.sh "570.195.03";
 fi
 
 
