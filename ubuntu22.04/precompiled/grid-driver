@@ -1,6 +1,6 @@
 #! /bin/bash
 
-GRID_INSTALLER_DIR=${GRID_INSTALLER_DIR:-/opt/nvidia-grid-install}
+GRID_INSTALLER_DIR=${GRID_INSTALLER_DIR:-/ckmb/nvidia-grid-install}
 
 _install_grid_driver() {
     echo "Installing NVIDIA GRID driver from Azure package..."
@@ -23,10 +23,11 @@ _install_grid_driver() {
     # Install kernel headers and modules required for DKMS
     # linux-modules provides video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
     echo "Installing kernel headers and modules for ${KERNEL_VERSION}..."
-    apt-get install --no-install-recommends --no-download -y \
+    apt-get install --no-install-recommends -y \
         linux-headers-${KERNEL_VERSION} \
         linux-modules-${KERNEL_VERSION} \
-        dkms
+        dkms \
+        build-essential
 
     # Create temporary directory for installer
     local tmpdir="$GRID_INSTALLER_DIR/nvidia-grid-tmp"

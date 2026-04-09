@@ -23,27 +23,25 @@ MODPROBE_CONFIG_DIR="/etc/modprobe.d"
 source "$(dirname "$0")/grid-driver"
 
 fabricmanager_install() {
-    apt-get install -y --no-install-recommends --no-download nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+    apt-get install -y --no-install-recommends nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
 }
 
 nscq_install() {
-    apt-get install -y --no-install-recommends --no-download libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+    apt-get install -y --no-install-recommends libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
 }
 
 imex_install() {
-    apt-get install -y --no-install-recommends --no-download nvidia-imex-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+    apt-get install -y --no-install-recommends nvidia-imex-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
 }
 
 nvlink5_pkgs_install() {
-    apt-get install -y --no-install-recommends --no-download \
-        infiniband-diags \
-        nvlsm
+    apt-get install -y --no-install-recommends infiniband-diags nvlsm
 }
 
 # libnvsdm packages are not available for arm64
 nvsdm_install() {
     if [ "$TARGETARCH" = "amd64" ]; then
-        apt-get install -y --no-install-recommends --no-download libnvsdm=${DRIVER_VERSION}-1
+        apt-get install -y --no-install-recommends libnvsdm=${DRIVER_VERSION}-1
     fi
 }
 
@@ -85,7 +83,7 @@ _assert_nvlink5_system() (
 
 # These kernel modules are not loaded by default
 _load_ib_modules() {
-    apt-get install -y --no-install-recommends --no-download linux-modules-extra-${KERNEL_VERSION}
+    apt-get install -y --no-install-recommends linux-modules-extra-${KERNEL_VERSION}
     echo "Manually loading ib_umad and mlx5_ib"
     modprobe ib_umad
     modprobe mlx5_ib
@@ -415,7 +413,7 @@ _resolve_kernel_type() {
 # Link and install the kernel modules from a precompiled packages
 _install_precompiled_driver() {
     # Install necessary driver userspace packages
-    apt-get install -y --no-install-recommends --no-download \
+    apt-get install -y --no-install-recommends \
         nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
         nvidia-headless-no-dkms-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
         libnvidia-decode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
@@ -426,12 +424,12 @@ _install_precompiled_driver() {
     # Now install the precompiled kernel module packages signed by Canonical
     if [ "$KERNEL_TYPE" = "kernel-open" ]; then
         echo "Installing Open NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends --no-download -y \
+        apt-get install --no-install-recommends -y \
             linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION}
     else
         echo "Installing Closed NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends --no-download -y \
+        apt-get install --no-install-recommends -y \
             linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
             linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION}
