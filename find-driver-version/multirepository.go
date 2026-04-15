@@ -2,11 +2,19 @@ package main
 
 import "regexp"
 
-var NvidiaRepositories = []string{
+var ubuntuComponentRepositories = []string{
+	"jammy/main",
+	"jammy-updates/main",
+	"jammy-security/main",
+	"jammy-backports/main",
 	"jammy/restricted",
 	"jammy-updates/restricted",
 	"jammy-security/restricted",
 	"jammy-backports/restricted",
+}
+
+var ubuntuProComponentRepositories = []string{
+	"jammy-updates/main",
 }
 
 type MultiRepository struct {
@@ -19,8 +27,15 @@ type MultiPackage struct {
 
 func GetMultiRepository() (*MultiRepository, error) {
 	multiRepository := MultiRepository{}
-	for _, repositoryName := range NvidiaRepositories {
-		repository, err := GetRepository(repositoryName)
+	for _, repositoryName := range ubuntuComponentRepositories {
+		repository, err := GetRepository("archive.ubuntu.com", repositoryName)
+		if err != nil {
+			return nil, err
+		}
+		multiRepository.repositories = append(multiRepository.repositories, repository)
+	}
+	for _, repositoryName := range ubuntuProComponentRepositories {
+		repository, err := GetRepository("esm.ubuntu.com/fips-updates", repositoryName)
 		if err != nil {
 			return nil, err
 		}
