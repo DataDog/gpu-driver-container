@@ -22,8 +22,8 @@ type Package struct {
 	DependsOnDriverVersion *string
 }
 
-func GetRepository(repository string) (*Repository, error) {
-	repositoryUrl := fmt.Sprintf("http://archive.ubuntu.com/ubuntu/dists/%s/binary-amd64/Packages.gz", repository)
+func GetRepository(url string, repository string) (*Repository, error) {
+	repositoryUrl := fmt.Sprintf("https://%s/ubuntu/dists/%s/binary-amd64/Packages.gz", url, repository)
 
 	resp, err := http.Get(repositoryUrl)
 	if err != nil {
