@@ -81,7 +81,7 @@ BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     perl \
     nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
     libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
-    nvidia-imex-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION} \
+    nvidia-imex=${DRIVER_VERSION}-1ubuntu1 \
     nvidia-kernel-common-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     nvidia-kernel-source-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-compute-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
@@ -89,7 +89,7 @@ BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-cfg1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     pciutils"
 if [ "$TARGETARCH" = "amd64" ]; then
-    BASE_PACKAGES="$BASE_PACKAGES libnvsdm=${DRIVER_VERSION}-1"
+    BASE_PACKAGES="$BASE_PACKAGES libnvsdm=${DRIVER_VERSION}-1ubuntu1"
 fi
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
     # Download GRID driver and its dependencies: kernel headers, dkms, linux-modules (for video.ko) — Azure only
