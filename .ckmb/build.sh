@@ -22,10 +22,14 @@ if [ "$TARGETARCH" = "amd64" ]; then
 else
     NVARCH=sbsa
 fi
-curl -fsSLO "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/${NVARCH}/cuda-keyring_1.1-1_all.deb"
+# Distribution is passed by CKMB; default to 22.04 for standalone runs
+DIST="${CKMB_DISTRIBUTION:-ubuntu22.04}"
+CUDA_DISTRO="ubuntu${DIST#ubuntu}"
+CUDA_DISTRO="${CUDA_DISTRO//./}"
+curl -fsSLO "https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${NVARCH}/cuda-keyring_1.1-1_all.deb"
 dpkg -i cuda-keyring_1.1-1_all.deb
 apt-key del 7fa2af80
-apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/${NVARCH}/3bf863cc.pub"
+apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${NVARCH}/3bf863cc.pub"
 
 apt-get update && apt-get install -y --no-install-recommends \
     apt-rdepends \
@@ -52,6 +56,7 @@ echo "KERNEL_VERSION=$KERNEL_VERSION" > /ckmb/versions.env
 echo "DRIVER_BRANCH=$DRIVER_BRANCH" >> /ckmb/versions.env
 
 echo "TARGETARCH=$TARGETARCH" >> /ckmb/versions.env
+echo "DISTRIBUTION=$DIST" >> /ckmb/versions.env
 
 FULL_DRIVER_VERSION=$(find-driver-version -d "$DRIVER_BRANCH" -k "$KERNEL_VERSION" | cut -d'>' -f2 | xargs)
 echo "FULL_DRIVER_VERSION=$FULL_DRIVER_VERSION" >> /ckmb/versions.env
@@ -108,13 +113,16 @@ sed -i 's|^Filename: /ckmb/apt-cache/|Filename: |' Packages
 gzip -9c Packages > Packages.gz
 cd -
 
-# Download Azure GRID drivers
-cp ubuntu22.04/precompiled/grid-driver /ckmb/grid-driver
-if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
-    # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
-    ./download_azure_grid_driver.sh "570.195.03";
+# Download Azure GRID drivers, only for distributions that ship the grid-driver
+# wrapper under precompiled/ (ubuntu24.04/precompiled currently does not)
+if [ -f "${DIST}/precompiled/grid-driver" ]; then
+    cp "${DIST}/precompiled/grid-driver" /ckmb/grid-driver
+    if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
+        # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
+        ./download_azure_grid_driver.sh "570.195.03";
+    fi
 fi
 
 
 ### Copy nvidia-driver executable ###
-cp ubuntu22.04/precompiled/nvidia-driver /ckmb/nvidia-driver
+cp "${DIST}/precompiled/nvidia-driver" /ckmb/nvidia-driver
