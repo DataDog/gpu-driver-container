@@ -99,7 +99,7 @@ fi
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
     # Download GRID driver and its dependencies: kernel headers, dkms, linux-modules (for video.ko) — Azure only
     # linux-modules contains video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
-    BASE_PACKAGES="$BASE_PACKAGES linux-headers-${KERNEL_VERSION} linux-modules-${KERNEL_VERSION} dkms python3.10-minimal build-essential"
+    BASE_PACKAGES="$BASE_PACKAGES linux-headers-${KERNEL_VERSION} linux-modules-${KERNEL_VERSION} dkms python3-minimal build-essential"
 fi
 BASE_PACKAGES_NAMES=$(echo "$BASE_PACKAGES" | sed -E 's/=([^ ]+)//g')
 DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-")
@@ -114,7 +114,7 @@ gzip -9c Packages > Packages.gz
 cd -
 
 # Download Azure GRID drivers, only for distributions that ship the grid-driver
-# wrapper under precompiled/ (ubuntu24.04/precompiled currently does not)
+# wrapper under precompiled/
 if [ -f "${DIST}/precompiled/grid-driver" ]; then
     cp "${DIST}/precompiled/grid-driver" /ckmb/grid-driver
     if [ "${KERNEL_VERSION##*-}" = "azure" ]; then

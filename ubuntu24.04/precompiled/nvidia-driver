@@ -15,6 +15,8 @@ NVIDIA_UVM_MODULE_PARAMS=()
 NVIDIA_MODESET_MODULE_PARAMS=()
 NVIDIA_PEERMEM_MODULE_PARAMS=()
 
+source "$(dirname "$0")/grid-driver"
+
 _update_package_cache() {
     if [ "${PACKAGE_TAG:-}" != "builtin" ]; then
         echo "Updating the package cache..."
@@ -141,6 +143,12 @@ _load_driver() {
     echo "Starting NVIDIA persistence daemon..."
     nvidia-persistenced --persistence-mode
 
+    if _is_grid_driver_required; then
+        # we need to start nvidia-gridd to get vGPU License for GRID driver
+        echo "Starting nvidia-gridd.."
+        LD_LIBRARY_PATH=/usr/lib/$(uname -m)-linux-gnu/nvidia/gridd nvidia-gridd
+    fi
+
     DRIVER_VERSION=$(nvidia-smi -q | grep "Driver Version" | awk -F: '{print $2}' | xargs)
     if _assert_nvswitch_system; then
         echo "Installing NVIDIA fabric manager and libnvidia NSCQ packages..."
@@ -163,6 +171,21 @@ _unload_driver() {
     local nvidia_uvm_refs=0
     local nvidia_modeset_refs=0
     local nvidia_peermem_refs=0
+
+    if [ -f /var/run/nvidia-gridd/nvidia-gridd.pid ]; then
+        echo "Stopping NVIDIA grid daemon..."
+        local pid=$(< /var/run/nvidia-gridd/nvidia-gridd.pid)
+
+        kill -SIGTERM "${pid}"
+        for i in $(seq 1 10); do
+            kill -0 "${pid}" 2> /dev/null || break
+            sleep 0.1
+        done
+        if [ $i -eq 10 ]; then
+            echo "Could not stop NVIDIA Grid daemon" >&2
+            return 1
+        fi
+    fi
 
     echo "Stopping NVIDIA persistence daemon..."
     if [ -f /var/run/nvidia-persistenced/nvidia-persistenced.pid ]; then
@@ -234,6 +257,11 @@ _unload_driver() {
 
 # Link and install the kernel modules from a precompiled packages
 _install_driver() {
+    if _is_grid_driver_required; then
+        _install_grid_driver
+        return
+    fi
+
     # Install necessary driver userspace packages
     apt-get install -y --no-install-recommends nvidia-driver-${DRIVER_BRANCH}-server
 
