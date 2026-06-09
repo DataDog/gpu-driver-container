@@ -59,7 +59,6 @@ RUN apt-get update && apt-get install --download-only --no-install-recommends -y
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}
 
 COPY nvidia-driver /usr/local/bin
-COPY grid-driver /usr/local/bin
 
 WORKDIR  /drivers
 

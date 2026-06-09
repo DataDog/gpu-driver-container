@@ -259,31 +259,30 @@ _unload_driver() {
 _install_driver() {
     if _is_grid_driver_required; then
         _install_grid_driver
-        return
-    fi
-
-    # Install necessary driver userspace packages
-    apt-get install -y --no-install-recommends nvidia-driver-${DRIVER_BRANCH}-server
-
-    # Uninstall unnecessary packages installed as a part of the nvidia-driver-${DRIVER_BRANCH}-server package
-    apt-get purge -y \
-        libnvidia-egl-wayland1 \
-        nvidia-dkms-${DRIVER_BRANCH}-server \
-        nvidia-kernel-source-${DRIVER_BRANCH}-server \
-        xserver-xorg-video-nvidia-${DRIVER_BRANCH}-server
-
-    # Now install the precompiled kernel module packages signed by Canonical
-    if [ "$OPEN_KERNEL_MODULES_ENABLED" = true ]; then
-        echo "Installing Open NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends -y \
-            linux-signatures-nvidia-${KERNEL_VERSION} \
-            linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}
     else
-        echo "Installing Closed NVIDIA driver kernel modules..."
-        apt-get install --no-install-recommends -y \
-            linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
-            linux-signatures-nvidia-${KERNEL_VERSION} \
-            linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}
+        # Install necessary driver userspace packages
+        apt-get install -y --no-install-recommends nvidia-driver-${DRIVER_BRANCH}-server
+
+        # Uninstall unnecessary packages installed as a part of the nvidia-driver-${DRIVER_BRANCH}-server package
+        apt-get purge -y \
+            libnvidia-egl-wayland1 \
+            nvidia-dkms-${DRIVER_BRANCH}-server \
+            nvidia-kernel-source-${DRIVER_BRANCH}-server \
+            xserver-xorg-video-nvidia-${DRIVER_BRANCH}-server
+
+        # Now install the precompiled kernel module packages signed by Canonical
+        if [ "$OPEN_KERNEL_MODULES_ENABLED" = true ]; then
+            echo "Installing Open NVIDIA driver kernel modules..."
+            apt-get install --no-install-recommends -y \
+                linux-signatures-nvidia-${KERNEL_VERSION} \
+                linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}
+        else
+            echo "Installing Closed NVIDIA driver kernel modules..."
+            apt-get install --no-install-recommends -y \
+                linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION} \
+                linux-signatures-nvidia-${KERNEL_VERSION} \
+                linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}
+        fi
     fi
 }
 
