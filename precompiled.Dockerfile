@@ -116,7 +116,8 @@ RUN . /versions.env && \
 
 RUN mkdir -p /opt/nvidia-driver/bin
 COPY ubuntu22.04/precompiled/nvidia-driver /opt/nvidia-driver/bin/nvidia-driver
-COPY ubuntu22.04/precompiled/grid-driver /opt/nvidia-driver/bin/grid-driver
+COPY precompiled/grid-driver /opt/nvidia-driver/bin/grid-driver
+COPY precompiled/datadog-driver-lib /opt/nvidia-driver/bin/datadog-driver-lib
 COPY nvidia-driver-wrapper.sh /usr/local/bin/nvidia-driver
 
 WORKDIR  /drivers

@@ -1,0 +1,41 @@
+#! /bin/bash
+# Datadog-owned shared helpers for the precompiled NVIDIA driver scripts.
+#
+# This library holds Datadog-specific installation/load helper functions that
+# are sourced by both ubuntu22.04 and ubuntu24.04 precompiled nvidia-driver
+# scripts. Keeping them here de-duplicates the Datadog additions while leaving
+# the NVIDIA-owned per-distro nvidia-driver scripts close to upstream.
+#
+# The following variables are expected to be set by the sourcing script:
+#   DRIVER_BRANCH, DRIVER_VERSION, FULL_DRIVER_VERSION, KERNEL_VERSION, TARGETARCH
+
+fabricmanager_install() {
+    apt-get install -y --no-install-recommends nvidia-fabricmanager-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+}
+
+nscq_install() {
+    apt-get install -y --no-install-recommends libnvidia-nscq-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+}
+
+imex_install() {
+    apt-get install -y --no-install-recommends nvidia-imex-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+}
+
+nvlink5_pkgs_install() {
+    apt-get install -y --no-install-recommends infiniband-diags nvlsm
+}
+
+# libnvsdm packages are not available for arm64
+nvsdm_install() {
+    if [ "$TARGETARCH" = "amd64" ]; then
+        apt-get install -y --no-install-recommends libnvsdm=${DRIVER_VERSION}-1
+    fi
+}
+
+# These kernel modules are not loaded by default
+_load_ib_modules() {
+    apt-get install -y --no-install-recommends linux-modules-extra-${KERNEL_VERSION}
+    echo "Manually loading ib_umad and mlx5_ib"
+    modprobe ib_umad
+    modprobe mlx5_ib
+}

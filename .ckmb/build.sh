@@ -113,14 +113,15 @@ sed -i 's|^Filename: /ckmb/apt-cache/|Filename: |' Packages
 gzip -9c Packages > Packages.gz
 cd -
 
-# Download Azure GRID drivers, only for distributions that ship the grid-driver
-# wrapper under precompiled/
-if [ -f "${DIST}/precompiled/grid-driver" ]; then
-    cp "${DIST}/precompiled/grid-driver" /ckmb/grid-driver
-    if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
-        # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
-        ./download_azure_grid_driver.sh "570.195.03";
-    fi
+# Copy the Datadog-owned shared scripts that the per-distro nvidia-driver sources.
+# These now live in the top-level precompiled/ directory and are shared across distros.
+cp precompiled/grid-driver /ckmb/grid-driver
+cp precompiled/datadog-driver-lib /ckmb/datadog-driver-lib
+
+# Download Azure GRID drivers, only on Azure kernels
+if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
+    # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
+    ./download_azure_grid_driver.sh "570.195.03";
 fi
 
 
