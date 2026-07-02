@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-var packageNameRegex = regexp.MustCompile(`^Package:\s+(.+)\n`)
 var nvidiaDriverDependencyRegex = regexp.MustCompile(`nvidia-kernel-common-\d+-server\s*\(..\s*([\d\.]+)`)
 
 type Repository struct {
@@ -38,8 +37,7 @@ func GetRepository(url string, repository string) (*Repository, error) {
 	defer reader.Close()
 
 	var b strings.Builder
-	_, err = io.Copy(&b, reader)
-	if err != nil {
+	if _, err = io.Copy(&b, reader); err != nil {
 		return nil, err
 	}
 
@@ -48,48 +46,24 @@ func GetRepository(url string, repository string) (*Repository, error) {
 	}, nil
 }
 
-func (r *Repository) GetMatchesOnPackages(regex *regexp.Regexp) []string {
-	matches := []string{}
-	for _, section := range r.sections {
-		packageNameMatch := packageNameRegex.FindStringSubmatch(section)
-		if len(packageNameMatch) >= 2 {
-			match := regex.FindStringSubmatch(packageNameMatch[1])
-			if len(match) >= 2 {
-				matches = append(matches, match[1])
-			}
-		}
-	}
-	return matches
-}
-
 func (r *Repository) GetPackage(name string) *Package {
-	packageSection := ""
 	for _, section := range r.sections {
-		if strings.Contains(section, fmt.Sprintf("Package: %s\n", name)) {
-			packageSection = section
+		if !strings.Contains(section, fmt.Sprintf("Package: %s\n", name)) {
+			continue
 		}
-	}
-	if packageSection == "" {
-		return nil
-	}
-
-	pkg := Package{
-		Name: name,
-	}
-
-	lines := strings.Split(packageSection, "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "Version: ") {
-			pkg.Version = strings.TrimSpace(strings.TrimPrefix(line, "Version: "))
-		}
-		if strings.HasPrefix(line, "Depends: ") {
-			packageDependency := strings.TrimSpace(strings.TrimPrefix(line, "Depends: "))
-			dependencyMatch := nvidiaDriverDependencyRegex.FindStringSubmatch(packageDependency)
-			if len(dependencyMatch) >= 2 {
-				pkg.DependsOnDriverVersion = &dependencyMatch[1]
+		pkg := &Package{Name: name}
+		for _, line := range strings.Split(section, "\n") {
+			if strings.HasPrefix(line, "Version: ") {
+				pkg.Version = strings.TrimSpace(strings.TrimPrefix(line, "Version: "))
+			}
+			if strings.HasPrefix(line, "Depends: ") {
+				dep := strings.TrimSpace(strings.TrimPrefix(line, "Depends: "))
+				if m := nvidiaDriverDependencyRegex.FindStringSubmatch(dep); len(m) >= 2 {
+					pkg.DependsOnDriverVersion = &m[1]
+				}
 			}
 		}
+		return pkg
 	}
-
-	return &pkg
+	return nil
 }

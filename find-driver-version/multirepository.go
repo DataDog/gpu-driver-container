@@ -1,22 +1,5 @@
 package main
 
-import "regexp"
-
-var ubuntuComponentRepositories = []string{
-	"jammy/main",
-	"jammy-updates/main",
-	"jammy-security/main",
-	"jammy-backports/main",
-	"jammy/restricted",
-	"jammy-updates/restricted",
-	"jammy-security/restricted",
-	"jammy-backports/restricted",
-}
-
-var ubuntuProComponentRepositories = []string{
-	"jammy-updates/main",
-}
-
 type MultiRepository struct {
 	repositories []*Repository
 }
@@ -25,78 +8,60 @@ type MultiPackage struct {
 	packages []*Package
 }
 
-func GetMultiRepository() (*MultiRepository, error) {
-	multiRepository := MultiRepository{}
-	for _, repositoryName := range ubuntuComponentRepositories {
-		repository, err := GetRepository("archive.ubuntu.com", repositoryName)
+func GetMultiRepository(distro string) (*MultiRepository, error) {
+	repos := []struct{ host, path string }{
+		{"archive.ubuntu.com", distro + "/main"},
+		{"archive.ubuntu.com", distro + "-updates/main"},
+		{"archive.ubuntu.com", distro + "-security/main"},
+		{"archive.ubuntu.com", distro + "-backports/main"},
+		{"archive.ubuntu.com", distro + "/restricted"},
+		{"archive.ubuntu.com", distro + "-updates/restricted"},
+		{"archive.ubuntu.com", distro + "-security/restricted"},
+		{"archive.ubuntu.com", distro + "-backports/restricted"},
+		{"esm.ubuntu.com/fips-updates", distro + "-updates/main"},
+	}
+
+	mr := &MultiRepository{}
+	for _, r := range repos {
+		repo, err := GetRepository(r.host, r.path)
 		if err != nil {
 			return nil, err
 		}
-		multiRepository.repositories = append(multiRepository.repositories, repository)
+		mr.repositories = append(mr.repositories, repo)
 	}
-	for _, repositoryName := range ubuntuProComponentRepositories {
-		repository, err := GetRepository("esm.ubuntu.com/fips-updates", repositoryName)
-		if err != nil {
-			return nil, err
-		}
-		multiRepository.repositories = append(multiRepository.repositories, repository)
-	}
-	return &multiRepository, nil
-}
-
-func (mr *MultiRepository) GetMatchesOnPackages(regex *regexp.Regexp) []string {
-	matchExists := make(map[string]bool)
-	matches := []string{}
-
-	for _, r := range mr.repositories {
-		for _, match := range r.GetMatchesOnPackages(regex) {
-			if !matchExists[match] {
-				matchExists[match] = true
-				matches = append(matches, match)
-			}
-		}
-	}
-
-	return matches
+	return mr, nil
 }
 
 func (mr *MultiRepository) GetMultiPackage(name string) MultiPackage {
-	multiPackage := MultiPackage{}
-
+	mp := MultiPackage{}
 	for _, r := range mr.repositories {
-		pkg := r.GetPackage(name)
-		if pkg != nil {
-			multiPackage.packages = append(multiPackage.packages, pkg)
+		if pkg := r.GetPackage(name); pkg != nil {
+			mp.packages = append(mp.packages, pkg)
 		}
 	}
-
-	return multiPackage
+	return mp
 }
 
 func (mp *MultiPackage) GetVersions() []string {
-	versionExists := make(map[string]bool)
+	seen := make(map[string]bool)
 	versions := []string{}
-
 	for _, p := range mp.packages {
-		if !versionExists[p.Version] {
-			versionExists[p.Version] = true
+		if !seen[p.Version] {
+			seen[p.Version] = true
 			versions = append(versions, p.Version)
 		}
 	}
-
 	return versions
 }
 
 func (mp *MultiPackage) GetNvidiaDriverDependencies() []string {
-	dependencyExists := make(map[string]bool)
-	dependencies := []string{}
-
+	seen := make(map[string]bool)
+	deps := []string{}
 	for _, p := range mp.packages {
-		if p.DependsOnDriverVersion != nil && !dependencyExists[*p.DependsOnDriverVersion] {
-			dependencyExists[*p.DependsOnDriverVersion] = true
-			dependencies = append(dependencies, *p.DependsOnDriverVersion)
+		if p.DependsOnDriverVersion != nil && !seen[*p.DependsOnDriverVersion] {
+			seen[*p.DependsOnDriverVersion] = true
+			deps = append(deps, *p.DependsOnDriverVersion)
 		}
 	}
-
-	return dependencies
+	return deps
 }
