@@ -1,5 +1,7 @@
 package main
 
+const aptMirror = "us-east-1.ec2.archive.ubuntu.com"
+
 type MultiRepository struct {
 	repositories []*Repository
 }
@@ -10,14 +12,14 @@ type MultiPackage struct {
 
 func GetMultiRepository(distro string) (*MultiRepository, error) {
 	repos := []struct{ host, path string }{
-		{"archive.ubuntu.com", distro + "/main"},
-		{"archive.ubuntu.com", distro + "-updates/main"},
-		{"archive.ubuntu.com", distro + "-security/main"},
-		{"archive.ubuntu.com", distro + "-backports/main"},
-		{"archive.ubuntu.com", distro + "/restricted"},
-		{"archive.ubuntu.com", distro + "-updates/restricted"},
-		{"archive.ubuntu.com", distro + "-security/restricted"},
-		{"archive.ubuntu.com", distro + "-backports/restricted"},
+		{aptMirror, distro + "/main"},
+		{aptMirror, distro + "-updates/main"},
+		{aptMirror, distro + "-security/main"},
+		{aptMirror, distro + "-backports/main"},
+		{aptMirror, distro + "/restricted"},
+		{aptMirror, distro + "-updates/restricted"},
+		{aptMirror, distro + "-security/restricted"},
+		{aptMirror, distro + "-backports/restricted"},
 		{"esm.ubuntu.com/fips-updates", distro + "-updates/main"},
 	}
 
