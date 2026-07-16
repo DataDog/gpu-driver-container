@@ -15,6 +15,9 @@ cd -
 export DEBIAN_FRONTEND=noninteractive
 echo "debconf debconf/frontend select Noninteractive" | debconf-set-selections
 TARGETARCH="$(dpkg --print-architecture)"
+source /etc/os-release
+UBUNTU_VERSION="ubuntu${VERSION_ID//./}"
+UBUNTU_VERSION_CODENAME="${VERSION_CODENAME}"
 
 # Configure CUDA repository
 if [ "$TARGETARCH" = "amd64" ]; then
@@ -22,10 +25,8 @@ if [ "$TARGETARCH" = "amd64" ]; then
 else
     NVARCH=sbsa
 fi
-curl -fsSLO "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/${NVARCH}/cuda-keyring_1.1-1_all.deb"
+curl -fsSLO "https://developer.download.nvidia.com/compute/cuda/repos/${UBUNTU_VERSION}/${NVARCH}/cuda-keyring_1.1-1_all.deb"
 dpkg -i cuda-keyring_1.1-1_all.deb
-apt-key del 7fa2af80
-apt-key adv --fetch-keys "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/${NVARCH}/3bf863cc.pub"
 
 apt-get update && apt-get install -y --no-install-recommends \
     apt-rdepends \
@@ -53,7 +54,7 @@ echo "DRIVER_BRANCH=$DRIVER_BRANCH" >> /ckmb/versions.env
 
 echo "TARGETARCH=$TARGETARCH" >> /ckmb/versions.env
 
-FULL_DRIVER_VERSION=$(find-driver-version -d "$DRIVER_BRANCH" -k "$KERNEL_VERSION" | cut -d'>' -f2 | xargs)
+FULL_DRIVER_VERSION=$(find-driver-version -d "$DRIVER_BRANCH" -k "$KERNEL_VERSION" -u "$UBUNTU_VERSION_CODENAME")
 echo "FULL_DRIVER_VERSION=$FULL_DRIVER_VERSION" >> /ckmb/versions.env
 
 DRIVER_VERSION="${FULL_DRIVER_VERSION%%-*}"
@@ -94,7 +95,7 @@ fi
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
     # Download GRID driver and its dependencies: kernel headers, dkms, linux-modules (for video.ko) — Azure only
     # linux-modules contains video.ko which nvidia-modeset depends on for __acpi_video_get_backlight_type symbol
-    BASE_PACKAGES="$BASE_PACKAGES linux-headers-${KERNEL_VERSION} linux-modules-${KERNEL_VERSION} dkms python3.10-minimal build-essential"
+    BASE_PACKAGES="$BASE_PACKAGES linux-headers-${KERNEL_VERSION} linux-modules-${KERNEL_VERSION} dkms python3-minimal build-essential"
 fi
 BASE_PACKAGES_NAMES=$(echo "$BASE_PACKAGES" | sed -E 's/=([^ ]+)//g')
 DEP_PACKAGES=$(apt-rdepends $BASE_PACKAGES_NAMES | grep -v "^ " | grep -v "^debconf-2.0$" | grep -v "^linux-image-unsigned-")
@@ -109,12 +110,12 @@ gzip -9c Packages > Packages.gz
 cd -
 
 # Download Azure GRID drivers
-cp ubuntu22.04/precompiled/grid-driver /ckmb/grid-driver
+cp dd_scripts/grid-driver /ckmb/grid-driver
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
     # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
-    ./download_azure_grid_driver.sh "570.195.03";
+    ./dd_scripts/download_azure_grid_driver.sh "570.195.03";
 fi
 
 
 ### Copy nvidia-driver executable ###
-cp ubuntu22.04/precompiled/nvidia-driver /ckmb/nvidia-driver
+cp dd_scripts/nvidia-driver /ckmb/nvidia-driver
