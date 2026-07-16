@@ -76,7 +76,6 @@ BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-signatures-nvidia-${KERNEL_VERSION}=${MODULES_VERSION} \
-    linux-modules-extra-${KERNEL_VERSION} \
     infiniband-diags \
     nvlsm \
     perl \
@@ -91,6 +90,10 @@ BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     pciutils"
 if [ "$TARGETARCH" = "amd64" ]; then
     BASE_PACKAGES="$BASE_PACKAGES libnvsdm=${DRIVER_VERSION}-1ubuntu1"
+fi
+if [[ "$KERNEL_VERSION" == 6.* ]]; then
+    # On old kernels, not all kernel modules are available in the linux-modules package
+    BASE_PACKAGES="$BASE_PACKAGES linux-modules-extra-${KERNEL_VERSION}"
 fi
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then \
     # Download GRID driver and its dependencies: kernel headers, dkms, linux-modules (for video.ko) — Azure only
