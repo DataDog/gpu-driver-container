@@ -31,7 +31,7 @@ nscq_install() {
 }
 
 imex_install() {
-    apt-get install -y --no-install-recommends nvidia-imex-${DRIVER_BRANCH}=${FULL_DRIVER_VERSION}
+    apt-get install -y --no-install-recommends nvidia-imex=${DRIVER_VERSION}-1ubuntu1
 }
 
 nvlink5_pkgs_install() {
@@ -41,7 +41,7 @@ nvlink5_pkgs_install() {
 # libnvsdm packages are not available for arm64
 nvsdm_install() {
     if [ "$TARGETARCH" = "amd64" ]; then
-        apt-get install -y --no-install-recommends libnvsdm=${DRIVER_VERSION}-1
+        apt-get install -y --no-install-recommends libnvsdm=${DRIVER_VERSION}-1ubuntu1
     fi
 }
 
