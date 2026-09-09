@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+exec {BASH_XTRACEFD}>&1 # redirect xtrace to stdout
 set -exo pipefail
 
 # Prepare apt cache
