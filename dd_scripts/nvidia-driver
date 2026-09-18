@@ -419,7 +419,8 @@ _install_precompiled_driver() {
         libnvidia-decode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
         libnvidia-extra-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
         libnvidia-encode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
-        libnvidia-fbc1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}
+        libnvidia-fbc1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+        libnvidia-gl-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION}
 
     # Now install the precompiled kernel module packages signed by Canonical
     if [ "$KERNEL_TYPE" = "kernel-open" ]; then

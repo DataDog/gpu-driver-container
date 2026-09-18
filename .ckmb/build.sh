@@ -72,6 +72,7 @@ BASE_PACKAGES="nvidia-utils-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-extra-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-encode-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     libnvidia-fbc1-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
+    libnvidia-gl-${DRIVER_BRANCH}-server=${FULL_DRIVER_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-modules-nvidia-${DRIVER_BRANCH}-server-open-${KERNEL_VERSION}=${MODULES_VERSION} \
     linux-objects-nvidia-${DRIVER_BRANCH}-server-${KERNEL_VERSION}=${MODULES_VERSION} \
