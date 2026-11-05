@@ -117,7 +117,7 @@ cd -
 cp dd_scripts/grid-driver /ckmb/grid-driver
 if [ "${KERNEL_VERSION##*-}" = "azure" ]; then
     # TODO: Azure supports only several GRID driver versions. Temporary hardcode the version.
-    ./dd_scripts/download_azure_grid_driver.sh "570.195.03";
+    ./dd_scripts/download_azure_grid_driver.sh "580.178.04";
 fi
 
 

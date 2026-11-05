@@ -5,7 +5,7 @@ set -eu
 GRID_INSTALLER_DIR=${GRID_INSTALLER_DIR:-/ckmb/nvidia-grid-install}
 
 # Available Azure GRID driver versions
-AVAILABLE_VERSIONS="550.144.06, 535.161.08, 525.105.17"
+AVAILABLE_VERSIONS="580.178.04, 570.195.03, 550.144.06, 535.161.08, 525.105.17"
 
 print_usage() {
     echo "Usage: $0 <driver_version>"
@@ -17,6 +17,9 @@ get_grid_azure_url() {
 
     # Azure GRID driver version mapping
     case "$version" in
+        580.178.04*)
+            echo "https://download.microsoft.com/download/4efc1974-7b6f-431f-ab2d-b8d99bb8a512/NVIDIA-Linux-x86_64-580.178.04-grid-azure.run"
+            ;;
         570.195.03*)
             echo "https://download.microsoft.com/download/0541e1a5-dff2-4b8c-a79c-96a7664b1d49/NVIDIA-Linux-x86_64-570.195.03-grid-azure.run"
             ;;
